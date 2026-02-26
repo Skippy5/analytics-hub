@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Time Series Forecaster</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h1 { color: #667eea; text-align: center; margin-bottom: 10px; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+    .upload { border: 3px dashed #667eea; padding: 40px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 30px; }
+    .upload:hover { background: #f8f9ff; }
+    .samples { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+    button { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #5568d3; }
+    #results { display: none; }
+    .controls { margin-bottom: 20px; text-align: center; }
+    .controls label { margin-right: 10px; color: #667eea; font-weight: 600; }
+    .controls input { padding: 8px; border: 2px solid #667eea; border-radius: 6px; width: 100px; }
+    canvas { max-height: 400px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔮 Time Series Forecaster</h1>
+    <p class="subtitle">Predict future trends with regression analysis</p>
+    
+    <div class="upload" id="upload">
+      <h3 style="color: #667eea;">📁 Drop CSV/Excel or click to upload</h3>
+      <p style="color: #666; margin-top: 10px;">Time series data (date/value pairs)</p>
+      <input type="file" id="file" accept=".csv,.xlsx" style="display:none">
+    </div>
+
+    <div class="samples">
+      <button onclick="loadSample('revenue')">💰 Revenue</button>
+      <button onclick="loadSample('users')">👥 User Growth</button>
+      <button onclick="loadSample('stock')">📈 Stock Price</button>
+    </div>
+
+    <div id="results">
+      <div class="controls">
+        <label>Forecast Periods:</label>
+        <input type="number" id="periods" value="5" min="1" max="20">
+        <button onclick="updateForecast()" style="margin-left: 10px;">Update Forecast</button>
+      </div>
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const samples = {
+      revenue: [100, 110, 125, 135, 150, 160, 180, 195, 210, 230, 245, 270],
+      users: [1000, 1200, 1450, 1650, 1900, 2150, 2400, 2700, 3050, 3400, 3800, 4250],
+      stock: [150, 152, 148, 155, 158, 160, 157, 162, 168, 165, 172, 178]
+    };
+
+    let chart, currentData = [];
+    document.getElementById('upload').onclick = () => document.getElementById('file').click();
+    document.getElementById('file').onchange = e => processFile(e.target.files[0]);
+
+    function loadSample(key) {
+      currentData = samples[key];
+      updateForecast();
+    }
+
+    function processFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+        const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
+        currentData = data.slice(1).map(row => parseFloat(row[1] || row[0])).filter(v => !isNaN(v));
+        if (currentData.length > 0) updateForecast();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function linearRegression(y) {
+      const n = y.length;
+      const x = y.map((_, i) => i);
+      const sumX = x.reduce((a,b) => a+b);
+      const sumY = y.reduce((a,b) => a+b);
+      const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+      const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+      
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+      
+      return { slope, intercept };
+    }
+
+    function updateForecast() {
+      const periods = parseInt(document.getElementById('periods').value) || 5;
+      const { slope, intercept } = linearRegression(currentData);
+      
+      const forecast = [];
+      for (let i = 0; i < periods; i++) {
+        forecast.push(slope * (currentData.length + i) + intercept);
+      }
+
+      const labels = [
+        ...currentData.map((_, i) => `Period ${i+1}`),
+        ...forecast.map((_, i) => `Forecast ${i+1}`)
+      ];
+
+      if (chart) chart.destroy();
+      chart = new Chart(document.getElementById('chart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Actual',
+              data: [...currentData, ...Array(forecast.length).fill(null)],
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              fill: true
+            },
+            {
+              label: 'Forecast',
+              data: [...Array(currentData.length).fill(null), ...forecast],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderDash: [5, 5],
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: `Time Series Forecast (+${periods} periods)`, font: {size: 16} },
+            legend: { position: 'bottom' }
+          },
+          scales: { y: { beginAtZero: false } }
+        }
+      });
+
+      document.getElementById('results').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

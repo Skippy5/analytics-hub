@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>A/B Test Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h1 { color: #667eea; text-align: center; margin-bottom: 10px; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 40px; }
+    .groups { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+    .group { background: #f8f9ff; padding: 25px; border-radius: 12px; }
+    .group h3 { color: #667eea; margin-bottom: 20px; text-align: center; }
+    .input-row { margin-bottom: 15px; }
+    .input-row label { display: block; color: #666; margin-bottom: 5px; font-size: 0.95em; }
+    .input-row input { width: 100%; padding: 12px; border: 2px solid #e0e7ff; border-radius: 8px; font-size: 1em; }
+    .input-row input:focus { outline: none; border-color: #667eea; }
+    button { background: #667eea; color: white; border: none; padding: 15px 40px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600; width: 100%; margin-top: 10px; }
+    button:hover { background: #5568d3; }
+    #results { display: none; margin-top: 30px; }
+    .result-box { background: #f8f9ff; padding: 25px; border-radius: 12px; border-left: 4px solid #667eea; }
+    .result-box h3 { color: #667eea; margin-bottom: 15px; }
+    .metric { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e7ff; }
+    .metric:last-child { border-bottom: none; }
+    .metric-label { color: #666; font-weight: 600; }
+    .metric-value { color: #333; font-weight: bold; }
+    .significance { padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px; font-size: 1.1em; font-weight: 600; }
+    .significant { background: #d1fae5; color: #065f46; border: 2px solid #10b981; }
+    .not-significant { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 A/B Test Calculator</h1>
+    <p class="subtitle">Calculate statistical significance for your experiments</p>
+
+    <div class="groups">
+      <div class="group">
+        <h3>🅰️ Control (A)</h3>
+        <div class="input-row">
+          <label>Visitors</label>
+          <input type="number" id="visitorsA" value="10000" min="1">
+        </div>
+        <div class="input-row">
+          <label>Conversions</label>
+          <input type="number" id="conversionsA" value="250" min="0">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>🅱️ Variant (B)</h3>
+        <div class="input-row">
+          <label>Visitors</label>
+          <input type="number" id="visitorsB" value="10000" min="1">
+        </div>
+        <div class="input-row">
+          <label>Conversions</label>
+          <input type="number" id="conversionsB" value="300" min="0">
+        </div>
+      </div>
+    </div>
+
+    <button onclick="calculate()">Calculate Significance</button>
+
+    <div id="results">
+      <div class="result-box">
+        <h3>📊 Results</h3>
+        <div class="metric">
+          <span class="metric-label">Control Conversion Rate</span>
+          <span class="metric-value" id="rateA">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Variant Conversion Rate</span>
+          <span class="metric-value" id="rateB">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Relative Uplift</span>
+          <span class="metric-value" id="uplift">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">P-Value</span>
+          <span class="metric-value" id="pvalue">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Confidence Level</span>
+          <span class="metric-value" id="confidence">-</span>
+        </div>
+      </div>
+
+      <div id="significance" class="significance"></div>
+    </div>
+  </div>
+
+  <script>
+    function calculate() {
+      const visitorsA = parseInt(document.getElementById('visitorsA').value);
+      const conversionsA = parseInt(document.getElementById('conversionsA').value);
+      const visitorsB = parseInt(document.getElementById('visitorsB').value);
+      const conversionsB = parseInt(document.getElementById('conversionsB').value);
+
+      const rateA = conversionsA / visitorsA;
+      const rateB = conversionsB / visitorsB;
+      const uplift = ((rateB - rateA) / rateA) * 100;
+
+      // Z-test for proportions
+      const pooledRate = (conversionsA + conversionsB) / (visitorsA + visitorsB);
+      const se = Math.sqrt(pooledRate * (1 - pooledRate) * (1/visitorsA + 1/visitorsB));
+      const zScore = (rateB - rateA) / se;
+      
+      // Calculate p-value (two-tailed)
+      const pValue = 2 * (1 - normalCDF(Math.abs(zScore)));
+      const confidence = (1 - pValue) * 100;
+
+      document.getElementById('rateA').textContent = `${(rateA * 100).toFixed(2)}%`;
+      document.getElementById('rateB').textContent = `${(rateB * 100).toFixed(2)}%`;
+      document.getElementById('uplift').textContent = `${uplift > 0 ? '+' : ''}${uplift.toFixed(2)}%`;
+      document.getElementById('pvalue').textContent = pValue.toFixed(4);
+      document.getElementById('confidence').textContent = `${confidence.toFixed(1)}%`;
+
+      const sigDiv = document.getElementById('significance');
+      if (pValue < 0.05) {
+        sigDiv.className = 'significance significant';
+        sigDiv.textContent = `✅ Statistically Significant (p < 0.05)`;
+      } else {
+        sigDiv.className = 'significance not-significant';
+        sigDiv.textContent = `❌ Not Statistically Significant (p ≥ 0.05)`;
+      }
+
+      document.getElementById('results').style.display = 'block';
+    }
+
+    // Standard normal cumulative distribution function
+    function normalCDF(x) {
+      const t = 1 / (1 + 0.2316419 * Math.abs(x));
+      const d = 0.3989423 * Math.exp(-x * x / 2);
+      const prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+      return x > 0 ? 1 - prob : prob;
+    }
+
+    // Calculate on load
+    calculate();
+  </script>
+</body>
+</html>

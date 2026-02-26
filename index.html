@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Hub — Free Data Analysis Tools</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .subtitle {
+      font-size: 1.3em;
+      opacity: 0.95;
+      font-weight: 300;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .tool-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+
+    .tool-icon {
+      font-size: 3em;
+      margin-bottom: 15px;
+    }
+
+    .tool-card h2 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 1.5em;
+    }
+
+    .tool-card p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .tool-badge {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-right: 5px;
+      margin-top: 10px;
+    }
+
+    .tool-badge.new {
+      background: #10b981;
+    }
+
+    footer {
+      text-align: center;
+      color: white;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+
+    footer a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .section-title {
+      color: white;
+      font-size: 2em;
+      margin: 60px 0 30px 0;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2em;
+      }
+
+      .subtitle {
+        font-size: 1.1em;
+      }
+
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 Analytics Hub</h1>
+      <p class="subtitle">Free, open-source data analysis tools. No sign-up required.</p>
+    </header>
+
+    <h3 class="section-title">🆕 Latest Tools</h3>
+    <div class="tools-grid">
+      <a href="survey-sentiment.html" class="tool-card">
+        <div class="tool-icon">💬</div>
+        <h2>Survey Sentiment Analyzer</h2>
+        <p>Upload survey responses, get AI-powered sentiment analysis with visual dashboards. Includes sample datasets and downloadable reports.</p>
+        <span class="tool-badge new">NEW</span>
+        <span class="tool-badge">AI-Powered</span>
+      </a>
+
+      <a href="distribution-analyzer.html" class="tool-card">
+        <div class="tool-icon">📈</div>
+        <h2>Distribution Analyzer</h2>
+        <p>Visualize data distributions with histograms, detect outliers, and understand your data's shape. Perfect for quality control and research.</p>
+        <span class="tool-badge new">NEW</span>
+        <span class="tool-badge">Statistics</span>
+      </a>
+
+      <a href="time-series-forecast.html" class="tool-card">
+        <div class="tool-icon">🔮</div>
+        <h2>Time Series Forecaster</h2>
+        <p>Predict future trends using linear and polynomial regression. Upload time-series data and get forecasts with confidence intervals.</p>
+        <span class="tool-badge new">NEW</span>
+        <span class="tool-badge">Predictions</span>
+      </a>
+
+      <a href="ab-test-calculator.html" class="tool-card">
+        <div class="tool-icon">🧪</div>
+        <h2>A/B Test Calculator</h2>
+        <p>Calculate statistical significance for A/B tests. Know if your experiment results are meaningful or just noise.</p>
+        <span class="tool-badge new">NEW</span>
+        <span class="tool-badge">Experiments</span>
+      </a>
+    </div>
+
+    <h3 class="section-title">🔥 Popular Tools</h3>
+    <div class="tools-grid">
+      <a href="https://skippy5.github.io/sentiment-timeline/" target="_blank" class="tool-card">
+        <div class="tool-icon">📊</div>
+        <h2>Sentiment Timeline</h2>
+        <p>Track sentiment changes over time for conversations, reviews, or social media data. Visualize trends with beautiful charts.</p>
+        <span class="tool-badge">Chart.js</span>
+      </a>
+
+      <a href="https://skippy5.github.io/correlation-heatmap/" target="_blank" class="tool-card">
+        <div class="tool-icon">🔥</div>
+        <h2>Correlation Heatmap</h2>
+        <p>Discover relationships between multiple variables with interactive correlation matrices. Pearson correlation analysis included.</p>
+        <span class="tool-badge">Statistics</span>
+      </a>
+
+      <a href="https://skippy5.github.io/text-analyzer/" target="_blank" class="tool-card">
+        <div class="tool-icon">📝</div>
+        <h2>Text Analyzer</h2>
+        <p>Comprehensive text analysis including readability scores, keyword extraction, sentiment analysis, and word frequency visualization.</p>
+        <span class="tool-badge">NLP</span>
+      </a>
+    </div>
+
+    <footer>
+      <p>Built with ❤️ by <a href="https://github.com/Skippy5" target="_blank">Skippy the Magnificent</a></p>
+      <p style="margin-top: 10px; opacity: 0.8;">All tools are free, open-source, and respect your privacy. No data leaves your browser.</p>
+      <p style="margin-top: 20px;">
+        <a href="https://github.com/Skippy5/analytics-hub" target="_blank">View on GitHub</a> | 
+        <a href="https://github.com/Skippy5" target="_blank">More Projects</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
