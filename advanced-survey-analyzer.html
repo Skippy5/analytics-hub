@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Survey Analyzer | Analytics Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #2563eb;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .upload-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .file-label:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .topic-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .topic-tag {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .topic-count {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        .insights-list {
+            list-style: none;
+        }
+
+        .insight-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #2563eb;
+            transition: all 0.3s ease;
+        }
+
+        .insight-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .export-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .sample-data-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .sentiment-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sentiment-neutral {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .sentiment-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Advanced Survey Analyzer</h1>
+            <p class="subtitle">AI-Powered Sentiment Analysis & Insights Dashboard</p>
+        </header>
+
+        <!-- Upload Section -->
+        <div class="card">
+            <h2>📁 Upload Survey Data</h2>
+            <div class="upload-section">
+                <label for="fileInput" class="file-label">Choose CSV/Excel File</label>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+                <span id="fileName" style="color: #666;"></span>
+            </div>
+            <div class="sample-data-section" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="loadSampleCustomerFeedback()">📝 Load Customer Feedback Sample</button>
+                <button class="btn btn-secondary" onclick="loadSampleEmployeeSurvey()">👔 Load Employee Survey Sample</button>
+                <button class="btn btn-secondary" onclick="loadSampleProductReviews()">⭐ Load Product Reviews Sample</button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <span class="spinner"></span> Analyzing your data...
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="results">
+            <!-- Overview Stats -->
+            <div class="card">
+                <h2>📈 Overview</h2>
+                <div class="analysis-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Responses</div>
+                        <div class="stat-number" id="totalResponses">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Overall Sentiment</div>
+                        <div class="stat-number" id="overallSentiment">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Positive Feedback</div>
+                        <div class="stat-number" id="positivePercent">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Average Words/Response</div>
+                        <div class="stat-number" id="avgWords">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentiment Analysis -->
+            <div class="card">
+                <h2>😊 Sentiment Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Topics & Keywords -->
+            <div class="card">
+                <h2>🏷️ Top Topics & Keywords</h2>
+                <div class="topic-list" id="topicsList"></div>
+                <div class="chart-container" style="margin-top: 30px;">
+                    <canvas id="topicsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Insights -->
+            <div class="card">
+                <h2>💡 Key Insights</h2>
+                <ul class="insights-list" id="insightsList"></ul>
+            </div>
+
+            <!-- Sentiment Over Time (if timestamps available) -->
+            <div class="card" id="trendCard" style="display: none;">
+                <h2>📉 Sentiment Trend</h2>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="card">
+                <h2>💾 Export Results</h2>
+                <div class="export-section">
+                    <button class="btn btn-success" onclick="exportToCSV()">📄 Export to CSV</button>
+                    <button class="btn btn-success" onclick="exportReport()">📋 Download Report</button>
+                    <button class="btn btn-success" onclick="copyInsights()">📎 Copy Insights</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built by Skippy the Magnificent 🍺 | Analytics Hub</p>
+        </footer>
+    </div>
+
+    <script>
+        // ========================
+        // STATE MANAGEMENT
+        // ========================
+        let surveyData = [];
+        let analysisResults = {};
+        let charts = {};
+
+        // ========================
+        // SENTIMENT ANALYSIS ENGINE
+        // ========================
+        const sentimentLexicon = {
+            // Positive words
+            positive: ['excellent', 'great', 'amazing', 'wonderful', 'fantastic', 'love', 'best', 
+                      'perfect', 'awesome', 'good', 'happy', 'pleased', 'satisfied', 'impressed',
+                      'brilliant', 'outstanding', 'superb', 'delighted', 'enjoy', 'recommend',
+                      'helpful', 'friendly', 'professional', 'quality', 'fast', 'efficient'],
+            // Negative words
+            negative: ['bad', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'poor', 'disappointed',
+                      'frustrating', 'slow', 'difficult', 'confusing', 'broken', 'useless', 'waste',
+                      'annoying', 'rude', 'unprofessional', 'expensive', 'overpriced', 'lacking',
+                      'failed', 'error', 'problem', 'issue', 'complaint', 'unhappy'],
+            // Neutral/intensifiers
+            intensifiers: ['very', 'extremely', 'absolutely', 'really', 'highly', 'completely', 'totally']
+        };
+
+        /**
+         * Analyze sentiment of a text string
+         * Returns: { score: -1 to 1, label: 'positive'|'neutral'|'negative', confidence: 0-100 }
+         */
+        function analyzeSentiment(text) {
+            if (!text) return { score: 0, label: 'neutral', confidence: 0 };
+            
+            const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+            let score = 0;
+            let wordCount = 0;
+            let intensifier = 1;
+
+            words.forEach((word, index) => {
+                if (sentimentLexicon.intensifiers.includes(word)) {
+                    intensifier = 1.5;
+                } else {
+                    if (sentimentLexicon.positive.includes(word)) {
+                        score += (1 * intensifier);
+                        wordCount++;
+                    } else if (sentimentLexicon.negative.includes(word)) {
+                        score -= (1 * intensifier);
+                        wordCount++;
+                    }
+                    intensifier = 1; // Reset after applying
+                }
+            });
+
+            // Normalize score
+            const normalizedScore = wordCount > 0 ? score / wordCount : 0;
+            const clampedScore = Math.max(-1, Math.min(1, normalizedScore));
+            
+            // Determine label
+            let label = 'neutral';
+            if (clampedScore > 0.2) label = 'positive';
+            else if (clampedScore < -0.2) label = 'negative';
+
+            // Calculate confidence (0-100)
+            const confidence = Math.min(100, Math.abs(clampedScore) * 100);
+
+            return { score: clampedScore, label, confidence: Math.round(confidence) };
+        }
+
+        // ========================
+        // TOPIC EXTRACTION
+        // ========================
+        const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+                                   'of', 'with', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has',
+                                   'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may',
+                                   'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he',
+                                   'she', 'it', 'we', 'they', 'what', 'which', 'who', 'when', 'where',
+                                   'why', 'how', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+                                   'very', 'just', 'so', 'than', 'too', 'not']);
+
+        /**
+         * Extract top keywords/topics from text corpus
+         * Returns: Array of { word, count } objects
+         */
+        function extractTopics(texts, topN = 20) {
+            const wordFreq = {};
+            
+            texts.forEach(text => {
+                if (!text) return;
+                const words = text.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+                words.forEach(word => {
+                    if (!stopWords.has(word)) {
+                        wordFreq[word] = (wordFreq[word] || 0) + 1;
+                    }
+                });
+            });
+
+            return Object.entries(wordFreq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, topN)
+                .map(([word, count]) => ({ word, count }));
+        }
+
+        // ========================
+        // INSIGHTS GENERATION
+        // ========================
+        function generateInsights(data, sentiments) {
+            const insights = [];
+            
+            // Sentiment distribution insight
+            const positive = sentiments.filter(s => s.label === 'positive').length;
+            const negative = sentiments.filter(s => s.label === 'negative').length;
+            const neutral = sentiments.filter(s => s.label === 'neutral').length;
+            const total = sentiments.length;
+
+            const posPercent = ((positive / total) * 100).toFixed(1);
+            const negPercent = ((negative / total) * 100).toFixed(1);
+
+            if (positive > negative * 2) {
+                insights.push(`🎉 Strong positive sentiment (${posPercent}%) - respondents are highly satisfied`);
+            } else if (negative > positive) {
+                insights.push(`⚠️ Concerning negative sentiment (${negPercent}%) - immediate attention needed`);
+            } else {
+                insights.push(`📊 Mixed sentiment - ${posPercent}% positive, ${negPercent}% negative`);
+            }
+
+            // Response length insight
+            const avgLength = data.reduce((sum, d) => sum + (d.text?.split(' ').length || 0), 0) / total;
+            if (avgLength > 50) {
+                insights.push(`📝 High engagement - average response is ${Math.round(avgLength)} words (respondents are detailed)`);
+            } else if (avgLength < 10) {
+                insights.push(`⚡ Brief responses - average ${Math.round(avgLength)} words (consider more specific questions)`);
+            }
+
+            // Topic-based insights
+            const topics = extractTopics(data.map(d => d.text), 10);
+            if (topics.length > 0) {
+                const topTopic = topics[0];
+                insights.push(`🏷️ Most discussed topic: "${topTopic.word}" (mentioned ${topTopic.count} times)`);
+            }
+
+            // Negative feedback insight
+            const negativeResponses = data.filter((_, i) => sentiments[i].label === 'negative');
+            if (negativeResponses.length > 0) {
+                const negativeTopics = extractTopics(negativeResponses.map(d => d.text), 5);
+                if (negativeTopics.length > 0) {
+                    insights.push(`🔍 Main concern in negative feedback: "${negativeTopics[0].word}"`);
+                }
+            }
+
+            // Positive feedback insight
+            const positiveResponses = data.filter((_, i) => sentiments[i].label === 'positive');
+            if (positiveResponses.length > 0) {
+                const positiveTopics = extractTopics(positiveResponses.map(d => d.text), 5);
+                if (positiveTopics.length > 0) {
+                    insights.push(`✨ Top strength in positive feedback: "${positiveTopics[0].word}"`);
+                }
+            }
+
+            // Response rate insight (if we have timestamp data)
+            if (data.some(d => d.timestamp)) {
+                insights.push(`📅 Data collected over ${calculateDateRange(data)} - consider seasonal patterns`);
+            }
+
+            return insights;
+        }
+
+        function calculateDateRange(data) {
+            const dates = data.filter(d => d.timestamp).map(d => new Date(d.timestamp));
+            if (dates.length < 2) return 'unknown period';
+            
+            const earliest = new Date(Math.min(...dates));
+            const latest = new Date(Math.max(...dates));
+            const days = Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24));
+            
+            return days > 30 ? `${Math.round(days / 30)} months` : `${days} days`;
+        }
+
+        // ========================
+        // FILE PROCESSING
+        // ========================
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (file.name.endsWith('.csv')) {
+                    processCSV(e.target.result);
+                } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    processExcel(e.target.result);
+                }
+            };
+
+            if (file.name.endsWith('.csv')) {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        function processCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index]?.trim() || '';
+                });
+                data.push(row);
+            }
+
+            processSurveyData(data, headers);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let char of line) {
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function processExcel(arrayBuffer) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(firstSheet);
+            
+            const headers = data.length > 0 ? Object.keys(data[0]).map(h => h.toLowerCase()) : [];
+            processSurveyData(data, headers);
+        }
+
+        function processSurveyData(rawData, headers) {
+            // Auto-detect response column (look for 'response', 'comment', 'feedback', 'text', etc.)
+            const textColumn = headers.find(h => 
+                h.includes('response') || h.includes('comment') || h.includes('feedback') || 
+                h.includes('text') || h.includes('answer') || h.includes('review')
+            ) || headers[0];
+
+            const timestampColumn = headers.find(h => 
+                h.includes('date') || h.includes('time') || h.includes('timestamp')
+            );
+
+            surveyData = rawData.map(row => ({
+                text: row[textColumn] || '',
+                timestamp: row[timestampColumn] || null,
+                rawData: row
+            })).filter(d => d.text);
+
+            if (surveyData.length === 0) {
+                alert('No valid text responses found in the data!');
+                return;
+            }
+
+            analyzeSurveyData();
+        }
+
+        // ========================
+        // ANALYSIS ENGINE
+        // ========================
+        function analyzeSurveyData() {
+            document.getElementById('loading').classList.add('active');
+            
+            // Small delay for UI responsiveness
+            setTimeout(() => {
+                // Perform sentiment analysis on all responses
+                const sentiments = surveyData.map(d => analyzeSentiment(d.text));
+                
+                // Calculate statistics
+                const total = surveyData.length;
+                const positive = sentiments.filter(s => s.label === 'positive').length;
+                const negative = sentiments.filter(s => s.label === 'negative').length;
+                const neutral = sentiments.filter(s => s.label === 'neutral').length;
+                
+                const avgScore = sentiments.reduce((sum, s) => sum + s.score, 0) / total;
+                const overallLabel = avgScore > 0.1 ? 'Positive' : avgScore < -0.1 ? 'Negative' : 'Neutral';
+                
+                const avgWords = surveyData.reduce((sum, d) => 
+                    sum + (d.text.split(/\s+/).length), 0) / total;
+
+                // Extract topics
+                const topics = extractTopics(surveyData.map(d => d.text), 15);
+
+                // Generate insights
+                const insights = generateInsights(surveyData, sentiments);
+
+                // Store results
+                analysisResults = {
+                    total,
+                    positive,
+                    negative,
+                    neutral,
+                    overallLabel,
+                    avgWords: Math.round(avgWords),
+                    topics,
+                    insights,
+                    sentiments
+                };
+
+                // Update UI
+                displayResults();
+                
+                document.getElementById('loading').classList.remove('active');
+            }, 100);
+        }
+
+        // ========================
+        // UI RENDERING
+        // ========================
+        function displayResults() {
+            const r = analysisResults;
+
+            // Update stats
+            document.getElementById('totalResponses').textContent = r.total;
+            document.getElementById('overallSentiment').textContent = r.overallLabel;
+            document.getElementById('positivePercent').textContent = 
+                `${((r.positive / r.total) * 100).toFixed(1)}%`;
+            document.getElementById('avgWords').textContent = r.avgWords;
+
+            // Display topics
+            const topicsList = document.getElementById('topicsList');
+            topicsList.innerHTML = r.topics.slice(0, 10).map(topic => `
+                <div class="topic-tag">
+                    ${topic.word}
+                    <span class="topic-count">${topic.count}</span>
+                </div>
+            `).join('');
+
+            // Display insights
+            const insightsList = document.getElementById('insightsList');
+            insightsList.innerHTML = r.insights.map(insight => `
+                <li class="insight-item">${insight}</li>
+            `).join('');
+
+            // Create charts
+            createSentimentChart();
+            createTopicsChart();
+            
+            // Show results
+            document.getElementById('results').classList.add('active');
+        }
+
+        function createSentimentChart() {
+            const ctx = document.getElementById('sentimentChart');
+            const r = analysisResults;
+
+            if (charts.sentiment) charts.sentiment.destroy();
+
+            charts.sentiment = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        data: [r.positive, r.neutral, r.negative],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(255, 99, 132, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 14 },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const percent = ((value / r.total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTopicsChart() {
+            const ctx = document.getElementById('topicsChart');
+            const r = analysisResults;
+            const topTopics = r.topics.slice(0, 10);
+
+            if (charts.topics) charts.topics.destroy();
+
+            charts.topics = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topTopics.map(t => t.word),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: topTopics.map(t => t.count),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Mentioned ${context.parsed.y} times`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========================
+        // EXPORT FUNCTIONALITY
+        // ========================
+        function exportToCSV() {
+            if (!analysisResults.sentiments) {
+                alert('No analysis results to export!');
+                return;
+            }
+
+            let csv = 'Response,Sentiment,Score,Confidence\n';
+            surveyData.forEach((d, i) => {
+                const s = analysisResults.sentiments[i];
+                const text = d.text.replace(/"/g, '""'); // Escape quotes
+                csv += `"${text}","${s.label}",${s.score.toFixed(3)},${s.confidence}\n`;
+            });
+
+            downloadFile('survey-analysis.csv', csv, 'text/csv');
+        }
+
+        function exportReport() {
+            if (!analysisResults.total) {
+                alert('No analysis results to export!');
+                return;
+            }
+
+            const r = analysisResults;
+            const report = `
+SURVEY ANALYSIS REPORT
+Generated: ${new Date().toLocaleString()}
+
+======================
+OVERVIEW
+======================
+Total Responses: ${r.total}
+Overall Sentiment: ${r.overallLabel}
+Positive: ${r.positive} (${((r.positive/r.total)*100).toFixed(1)}%)
+Neutral: ${r.neutral} (${((r.neutral/r.total)*100).toFixed(1)}%)
+Negative: ${r.negative} (${((r.negative/r.total)*100).toFixed(1)}%)
+Average Words per Response: ${r.avgWords}
+
+======================
+TOP TOPICS
+======================
+${r.topics.slice(0, 10).map((t, i) => `${i+1}. ${t.word} (${t.count} mentions)`).join('\n')}
+
+======================
+KEY INSIGHTS
+======================
+${r.insights.map((insight, i) => `${i+1}. ${insight.replace(/[🎉⚠️📊📝⚡🏷️🔍✨📅]/g, '')}`).join('\n')}
+
+======================
+RECOMMENDATIONS
+======================
+${generateRecommendations(r).join('\n')}
+
+---
+Report generated by Advanced Survey Analyzer
+Built by Skippy the Magnificent 🍺
+            `.trim();
+
+            downloadFile('survey-report.txt', report, 'text/plain');
+        }
+
+        function generateRecommendations(results) {
+            const recommendations = [];
+            const posPercent = (results.positive / results.total) * 100;
+            const negPercent = (results.negative / results.total) * 100;
+
+            if (negPercent > 30) {
+                recommendations.push('- Address negative feedback urgently - over 30% dissatisfaction rate');
+            }
+            if (results.avgWords < 10) {
+                recommendations.push('- Consider more engaging questions to elicit detailed responses');
+            }
+            if (posPercent > 70) {
+                recommendations.push('- Leverage positive sentiment in marketing and testimonials');
+            }
+            if (results.neutral / results.total > 0.4) {
+                recommendations.push('- High neutral sentiment suggests room for improvement in engagement');
+            }
+
+            return recommendations.length > 0 ? recommendations : ['- Continue monitoring feedback trends over time'];
+        }
+
+        function copyInsights() {
+            if (!analysisResults.insights) {
+                alert('No insights to copy!');
+                return;
+            }
+
+            const text = analysisResults.insights.join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Insights copied to clipboard!');
+            });
+        }
+
+        function downloadFile(filename, content, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ========================
+        // SAMPLE DATA SETS
+        // ========================
+        function loadSampleCustomerFeedback() {
+            surveyData = [
+                { text: "Excellent customer service! The team was very helpful and professional.", timestamp: "2024-01-15" },
+                { text: "Product quality is outstanding. I'm very satisfied with my purchase.", timestamp: "2024-01-16" },
+                { text: "Disappointed with the shipping time. It took too long to arrive.", timestamp: "2024-01-17" },
+                { text: "Great value for money. Would definitely recommend to friends.", timestamp: "2024-01-18" },
+                { text: "The website is confusing and difficult to navigate. Needs improvement.", timestamp: "2024-01-19" },
+                { text: "Amazing experience! Everything was perfect from start to finish.", timestamp: "2024-01-20" },
+                { text: "Product arrived damaged. Customer support was slow to respond.", timestamp: "2024-01-21" },
+                { text: "Good quality but a bit overpriced compared to competitors.", timestamp: "2024-01-22" },
+                { text: "Fast delivery and excellent packaging. Very impressed!", timestamp: "2024-01-23" },
+                { text: "The return process was smooth and hassle-free. Great policy!", timestamp: "2024-01-24" },
+                { text: "Not what I expected. Description was misleading.", timestamp: "2024-01-25" },
+                { text: "Absolutely love it! Best purchase I've made this year.", timestamp: "2024-01-26" },
+                { text: "Customer service needs serious improvement. Waited forever for help.", timestamp: "2024-01-27" },
+                { text: "High quality materials and great craftsmanship. Worth every penny.", timestamp: "2024-01-28" },
+                { text: "Received the wrong item. Still waiting for replacement.", timestamp: "2024-01-29" },
+                { text: "Exactly as described. Very happy with the purchase!", timestamp: "2024-01-30" },
+                { text: "Terrible experience. Would not buy again.", timestamp: "2024-01-31" },
+                { text: "The product exceeded my expectations. Highly recommend!", timestamp: "2024-02-01" },
+                { text: "Decent product but nothing special. Average quality.", timestamp: "2024-02-02" },
+                { text: "Outstanding! The best service I've ever received online.", timestamp: "2024-02-03" }
+            ];
+            
+            document.getElementById('fileName').textContent = 'customer-feedback-sample.csv (loaded)';
+            analyzeSurveyData();
+        }
+
+        function loadSampleEmployeeSurvey() {
+            surveyData = [
+                { text: "I feel valued and appreciated by management. Great workplace culture.", timestamp: "2024-01-10" },
+                { text: "Work-life balance is poor. Too many overtime hours expected.", timestamp: "2024-01-11" },
+                { text: "Excellent training and development opportunities available.", timestamp: "2024-01-12" },
+                { text: "Communication from upper management could be much better.", timestamp: "2024-01-13" },
+                { text: "Love the team I work with. Very supportive and collaborative.", timestamp: "2024-01-14" },
+                { text: "Salary is below industry standard for my role and experience.", timestamp: "2024-01-15" },
+                { text: "The benefits package is comprehensive and competitive.", timestamp: "2024-01-16" },
+                { text: "Office environment is outdated and needs modernization.", timestamp: "2024-01-17" },
+                { text: "Great opportunities for career advancement within the company.", timestamp: "2024-01-18" },
+                { text: "Management doesn't listen to employee feedback or suggestions.", timestamp: "2024-01-19" },
+                { text: "Flexible working arrangements make this a great place to work.", timestamp: "2024-01-20" },
+                { text: "Recognition programs are excellent. I feel appreciated.", timestamp: "2024-01-21" },
+                { text: "Too much bureaucracy and red tape. Slows down productivity.", timestamp: "2024-01-22" },
+                { text: "The company invests in employees' professional growth. Impressed!", timestamp: "2024-01-23" },
+                { text: "Workload is unrealistic. Constantly stressed and overwhelmed.", timestamp: "2024-01-24" },
+                { text: "Proud to work here. Company values align with my own.", timestamp: "2024-01-25" },
+                { text: "Limited resources make it difficult to do my job effectively.", timestamp: "2024-01-26" },
+                { text: "Management is transparent and communicative. Trustworthy leadership.", timestamp: "2024-01-27" },
+                { text: "Lack of diversity in leadership positions. Needs improvement.", timestamp: "2024-01-28" },
+                { text: "Best company I've ever worked for. Highly recommend as employer.", timestamp: "2024-01-29" }
+            ];
+            
+            document.getElementById('fileName').textContent = 'employee-survey-sample.csv (loaded)';
+            analyzeSurveyData();
+        }
+
+        function loadSampleProductReviews() {
+            surveyData = [
+                { text: "This product is absolutely fantastic! Five stars all the way.", timestamp: "2024-02-01" },
+                { text: "Broke after just two weeks. Very disappointed with quality.", timestamp: "2024-02-02" },
+                { text: "Good value for the price. Does exactly what it's supposed to do.", timestamp: "2024-02-03" },
+                { text: "Instructions were unclear and confusing. Took forever to set up.", timestamp: "2024-02-04" },
+                { text: "Love everything about this! Design is beautiful and functional.", timestamp: "2024-02-05" },
+                { text: "Not worth the money. Many better alternatives available.", timestamp: "2024-02-06" },
+                { text: "Impressed with the build quality. Feels premium and well-made.", timestamp: "2024-02-07" },
+                { text: "Customer support was unhelpful when I had issues with the product.", timestamp: "2024-02-08" },
+                { text: "Perfect for my needs. Would buy again without hesitation.", timestamp: "2024-02-09" },
+                { text: "Arrived late and packaging was terrible. Product was scratched.", timestamp: "2024-02-10" },
+                { text: "Excellent purchase! Exactly what I was looking for.", timestamp: "2024-02-11" },
+                { text: "Features don't work as advertised. Very misleading marketing.", timestamp: "2024-02-12" },
+                { text: "Great design and easy to use. Very user-friendly interface.", timestamp: "2024-02-13" },
+                { text: "Stopped working after a month. Waste of money.", timestamp: "2024-02-14" },
+                { text: "Highly recommend this product. Best in its category!", timestamp: "2024-02-15" },
+                { text: "Okay product but overpriced for what you get.", timestamp: "2024-02-16" },
+                { text: "Amazing quality and performance. Exceeded all expectations.", timestamp: "2024-02-17" },
+                { text: "Difficult to assemble. Missing parts in the package.", timestamp: "2024-02-18" },
+                { text: "Perfect gift! Everyone loves it. Great purchase decision.", timestamp: "2024-02-19" },
+                { text: "Cheaply made. Not durable at all. Regret buying this.", timestamp: "2024-02-20" }
+            ];
+            
+            document.getElementById('fileName').textContent = 'product-reviews-sample.csv (loaded)';
+            analyzeSurveyData();
+        }
+    </script>
+</body>
+</html>

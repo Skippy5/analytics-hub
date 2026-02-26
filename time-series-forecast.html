@@ -6,19 +6,19 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+    body { font-family: system-ui; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); min-height: 100vh; padding: 40px 20px; }
     .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-    h1 { color: #667eea; text-align: center; margin-bottom: 10px; }
+    h1 { color: #2563eb; text-align: center; margin-bottom: 10px; }
     .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
-    .upload { border: 3px dashed #667eea; padding: 40px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 30px; }
-    .upload:hover { background: #f8f9ff; }
+    .upload { border: 3px dashed #2563eb; padding: 40px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 30px; }
+    .upload:hover { background: #eff6ff; }
     .samples { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
-    button { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; }
-    button:hover { background: #5568d3; }
+    button { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #1e40af; }
     #results { display: none; }
     .controls { margin-bottom: 20px; text-align: center; }
-    .controls label { margin-right: 10px; color: #667eea; font-weight: 600; }
-    .controls input { padding: 8px; border: 2px solid #667eea; border-radius: 6px; width: 100px; }
+    .controls label { margin-right: 10px; color: #2563eb; font-weight: 600; }
+    .controls input { padding: 8px; border: 2px solid #2563eb; border-radius: 6px; width: 100px; }
     canvas { max-height: 400px; margin-top: 20px; }
   </style>
 </head>
@@ -28,7 +28,7 @@
     <p class="subtitle">Predict future trends with regression analysis</p>
     
     <div class="upload" id="upload">
-      <h3 style="color: #667eea;">📁 Drop CSV/Excel or click to upload</h3>
+      <h3 style="color: #2563eb;">📁 Drop CSV/Excel or click to upload</h3>
       <p style="color: #666; margin-top: 10px;">Time series data (date/value pairs)</p>
       <input type="file" id="file" accept=".csv,.xlsx" style="display:none">
     </div>
@@ -113,7 +113,7 @@
             {
               label: 'Actual',
               data: [...currentData, ...Array(forecast.length).fill(null)],
-              borderColor: '#667eea',
+              borderColor: '#2563eb',
               backgroundColor: 'rgba(102, 126, 234, 0.1)',
               fill: true
             },

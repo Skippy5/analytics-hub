@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sankey Diagram - Flow Visualization Tool</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #dbeafe;
+    }
+
+    h1 {
+      color: #1e3a8a;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 1.1em;
+    }
+
+    .controls {
+      background: #eff6ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dbeafe;
+    }
+
+    .control-group {
+      margin-bottom: 15px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1e3a8a;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #dbeafe;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .sample-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #1e40af;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: #64748b;
+    }
+
+    button.secondary:hover {
+      background: #475569;
+    }
+
+    #canvas-container {
+      background: white;
+      border: 2px solid #dbeafe;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: auto;
+      position: relative;
+    }
+
+    svg {
+      display: block;
+      font-family: inherit;
+    }
+
+    .node rect {
+      cursor: move;
+      fill-opacity: .9;
+      shape-rendering: crispEdges;
+      stroke: white;
+      stroke-width: 2px;
+    }
+
+    .node text {
+      pointer-events: none;
+      text-shadow: 0 1px 0 #fff;
+      font-size: 13px;
+      font-weight: 600;
+      fill: #1e3a8a;
+    }
+
+    .link {
+      fill: none;
+      stroke-opacity: .4;
+    }
+
+    .link:hover {
+      stroke-opacity: .7;
+    }
+
+    .stats {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dbeafe;
+    }
+
+    .stats h3 {
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+
+    .stat-item {
+      display: inline-block;
+      margin-right: 25px;
+      font-size: 0.95em;
+      color: #475569;
+    }
+
+    .stat-item strong {
+      color: #1e3a8a;
+    }
+
+    .export-section {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .info-box h3 {
+      color: #1e3a8a;
+      margin-bottom: 8px;
+    }
+
+    .info-box ul {
+      margin-left: 20px;
+      color: #64748b;
+    }
+
+    .info-box li {
+      margin-bottom: 4px;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(30, 58, 138, 0.95);
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+
+      .sample-buttons {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌊 Sankey Diagram</h1>
+      <p class="subtitle">Visualize Flow & Distribution Patterns</p>
+    </header>
+
+    <div class="info-box">
+      <h3>📋 CSV Format</h3>
+      <ul>
+        <li><strong>source, target, value</strong></li>
+        <li>Example: Awareness, Consideration, 1000</li>
+      </ul>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>📂 Upload CSV File</label>
+        <input type="file" id="file-input" accept=".csv">
+      </div>
+
+      <div class="control-group">
+        <label>📊 Sample Datasets</label>
+        <div class="sample-buttons">
+          <button onclick="loadSample('journey')">Customer Journey</button>
+          <button onclick="loadSample('budget')">Budget Allocation</button>
+          <button onclick="loadSample('traffic')">Traffic Sources</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats" id="stats" style="display: none;">
+      <h3>📈 Flow Statistics</h3>
+      <div id="stats-content"></div>
+    </div>
+
+    <div id="canvas-container">
+      <svg id="sankey-canvas"></svg>
+    </div>
+
+    <div class="export-section">
+      <button onclick="exportPNG()">💾 Export as PNG</button>
+      <button onclick="exportCSV()" class="secondary">📥 Export CSV Data</button>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <script>
+    let sankeyData = { nodes: [], links: [] };
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Load sample data
+    function loadSample(type) {
+      let csvData = '';
+
+      if (type === 'journey') {
+        csvData = `source,target,value
+Awareness,Consideration,10000
+Consideration,Interest,6000
+Consideration,Bounce,4000
+Interest,Evaluation,4500
+Interest,Bounce,1500
+Evaluation,Purchase,2500
+Evaluation,Cart Abandon,2000
+Purchase,Repeat Customer,1500
+Purchase,One-Time,1000
+Cart Abandon,Recovery,500
+Cart Abandon,Lost,1500`;
+      } else if (type === 'budget') {
+        csvData = `source,target,value
+Total Budget,Engineering,500000
+Total Budget,Marketing,300000
+Total Budget,Sales,200000
+Total Budget,Operations,150000
+Engineering,Salaries,350000
+Engineering,Infrastructure,100000
+Engineering,Tools,50000
+Marketing,Advertising,150000
+Marketing,Content,80000
+Marketing,Events,70000
+Sales,Commissions,120000
+Sales,Travel,50000
+Sales,Tools,30000
+Operations,Facilities,80000
+Operations,Admin,50000
+Operations,IT,20000`;
+      } else if (type === 'traffic') {
+        csvData = `source,target,value
+Google Search,Homepage,5000
+Google Search,Product Page,3000
+Facebook,Homepage,2500
+Facebook,Blog,1500
+Direct,Homepage,4000
+Email Campaign,Product Page,2000
+Email Campaign,Blog,1000
+Homepage,Product Page,6000
+Homepage,About,2000
+Homepage,Exit,3500
+Product Page,Checkout,3500
+Product Page,Exit,4500
+Blog,Product Page,1500
+Blog,Exit,1000
+About,Contact,1200
+About,Exit,800
+Checkout,Purchase,2800
+Checkout,Exit,700`;
+      }
+
+      parseCSV(csvData);
+    }
+
+    // Parse CSV
+    function parseCSV(csvText) {
+      const lines = csvText.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+
+      const nodeMap = new Map();
+      const links = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const source = values[0];
+        const target = values[1];
+        const value = parseFloat(values[2]);
+
+        if (!nodeMap.has(source)) {
+          nodeMap.set(source, { name: source });
+        }
+        if (!nodeMap.has(target)) {
+          nodeMap.set(target, { name: target });
+        }
+
+        links.push({
+          source: Array.from(nodeMap.keys()).indexOf(source),
+          target: Array.from(nodeMap.keys()).indexOf(target),
+          value: value
+        });
+      }
+
+      sankeyData = {
+        nodes: Array.from(nodeMap.values()),
+        links: links
+      };
+
+      renderSankey();
+      updateStats();
+    }
+
+    // Render Sankey diagram
+    function renderSankey() {
+      const container = document.getElementById('canvas-container');
+      const margin = { top: 20, right: 150, bottom: 20, left: 150 };
+      const width = Math.max(1000, container.clientWidth) - margin.left - margin.right;
+      const height = Math.max(600, sankeyData.nodes.length * 40) - margin.top - margin.bottom;
+
+      d3.select('#sankey-canvas').selectAll('*').remove();
+
+      const svg = d3.select('#sankey-canvas')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+      // Create Sankey layout
+      const sankey = d3.sankey()
+        .nodeWidth(20)
+        .nodePadding(20)
+        .extent([[0, 0], [width, height]]);
+
+      const { nodes, links } = sankey({
+        nodes: sankeyData.nodes.map(d => Object.assign({}, d)),
+        links: sankeyData.links.map(d => Object.assign({}, d))
+      });
+
+      // Draw links
+      svg.append('g')
+        .selectAll('path')
+        .data(links)
+        .join('path')
+        .attr('class', 'link')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke', d => colorScale(d.source.name))
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .on('mouseover', function(event, d) {
+          showTooltip(event, `${d.source.name} → ${d.target.name}<br><strong>${d.value.toLocaleString()}</strong>`);
+        })
+        .on('mouseout', hideTooltip);
+
+      // Draw nodes
+      const node = svg.append('g')
+        .selectAll('g')
+        .data(nodes)
+        .join('g')
+        .attr('class', 'node');
+
+      node.append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y0)
+        .attr('height', d => d.y1 - d.y0)
+        .attr('width', d => d.x1 - d.x0)
+        .attr('fill', d => colorScale(d.name))
+        .on('mouseover', function(event, d) {
+          const total = d.value.toLocaleString();
+          showTooltip(event, `<strong>${d.name}</strong><br>Total: ${total}`);
+        })
+        .on('mouseout', hideTooltip);
+
+      // Add labels
+      node.append('text')
+        .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+        .attr('y', d => (d.y1 + d.y0) / 2)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+        .text(d => d.name);
+    }
+
+    // Show tooltip
+    function showTooltip(event, html) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.innerHTML = html;
+      tooltip.className = 'tooltip visible';
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 10) + 'px';
+    }
+
+    // Hide tooltip
+    function hideTooltip() {
+      document.getElementById('tooltip').className = 'tooltip';
+    }
+
+    // Update stats
+    function updateStats() {
+      const totalFlow = sankeyData.links.reduce((sum, l) => sum + l.value, 0);
+      const uniqueNodes = sankeyData.nodes.length;
+      const totalLinks = sankeyData.links.length;
+
+      const html = `
+        <span class="stat-item"><strong>Total Nodes:</strong> ${uniqueNodes}</span>
+        <span class="stat-item"><strong>Total Flows:</strong> ${totalLinks}</span>
+        <span class="stat-item"><strong>Total Volume:</strong> ${totalFlow.toLocaleString()}</span>
+      `;
+
+      document.getElementById('stats-content').innerHTML = html;
+      document.getElementById('stats').style.display = 'block';
+    }
+
+    // Export PNG
+    function exportPNG() {
+      const svgElement = document.getElementById('sankey-canvas');
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      const bbox = svgElement.getBBox();
+      canvas.width = bbox.width + 40;
+      canvas.height = bbox.height + 40;
+
+      img.onload = () => {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'sankey-diagram.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      };
+
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    }
+
+    // Export CSV
+    function exportCSV() {
+      let csv = 'source,target,value\n';
+      sankeyData.links.forEach((link, i) => {
+        const source = sankeyData.nodes[typeof link.source === 'number' ? link.source : link.source.index].name;
+        const target = sankeyData.nodes[typeof link.target === 'number' ? link.target : link.target.index].name;
+        csv += `${source},${target},${link.value}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sankey-data.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // File upload handler
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        parseCSV(event.target.result);
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connection Canvas - Network Visualization Tool</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #dbeafe;
+    }
+
+    h1 {
+      color: #1e3a8a;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 1.1em;
+    }
+
+    .controls {
+      background: #eff6ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dbeafe;
+    }
+
+    .control-group {
+      margin-bottom: 15px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1e3a8a;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #dbeafe;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .sample-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #1e40af;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: #64748b;
+    }
+
+    button.secondary:hover {
+      background: #475569;
+    }
+
+    #canvas-container {
+      background: white;
+      border: 2px solid #dbeafe;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 600px;
+    }
+
+    .node {
+      cursor: move;
+      stroke: white;
+      stroke-width: 2px;
+    }
+
+    .link {
+      stroke: #94a3b8;
+      stroke-opacity: 0.6;
+      stroke-width: 2px;
+    }
+
+    .node-label {
+      font-size: 12px;
+      font-weight: 600;
+      fill: #1e3a8a;
+      pointer-events: none;
+      text-anchor: middle;
+    }
+
+    .legend {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dbeafe;
+    }
+
+    .legend h3 {
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 20px;
+      margin-bottom: 8px;
+      font-size: 0.95em;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 6px;
+      border: 2px solid white;
+    }
+
+    .filter-section {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dbeafe;
+    }
+
+    .filter-section h3 {
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.95em;
+    }
+
+    .checkbox-label input {
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    .stats {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dbeafe;
+    }
+
+    .stats h3 {
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+
+    .stat-item {
+      display: inline-block;
+      margin-right: 25px;
+      font-size: 0.95em;
+      color: #475569;
+    }
+
+    .stat-item strong {
+      color: #1e3a8a;
+    }
+
+    .export-section {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .info-box h3 {
+      color: #1e3a8a;
+      margin-bottom: 8px;
+    }
+
+    .info-box ul {
+      margin-left: 20px;
+      color: #64748b;
+    }
+
+    .info-box li {
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+
+      svg {
+        height: 400px;
+      }
+
+      .sample-buttons {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🕸️ Connection Canvas</h1>
+      <p class="subtitle">Interactive Network & Relationship Visualization</p>
+    </header>
+
+    <div class="info-box">
+      <h3>📋 CSV Format</h3>
+      <ul>
+        <li><strong>node1, node2, relationship_type</strong></li>
+        <li>Example: Alice, Bob, friend</li>
+      </ul>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>📂 Upload CSV File</label>
+        <input type="file" id="file-input" accept=".csv">
+      </div>
+
+      <div class="control-group">
+        <label>📊 Sample Datasets</label>
+        <div class="sample-buttons">
+          <button onclick="loadSample('social')">Social Network</button>
+          <button onclick="loadSample('orgchart')">Company Org Chart</button>
+          <button onclick="loadSample('project')">Project Dependencies</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats" id="stats" style="display: none;">
+      <h3>📈 Network Statistics</h3>
+      <div id="stats-content"></div>
+    </div>
+
+    <div class="filter-section" id="filter-section" style="display: none;">
+      <h3>🔍 Filter by Relationship Type</h3>
+      <div class="checkbox-group" id="filter-checkboxes"></div>
+    </div>
+
+    <div class="legend" id="legend" style="display: none;">
+      <h3>🎨 Relationship Types</h3>
+      <div id="legend-content"></div>
+    </div>
+
+    <div id="canvas-container">
+      <svg id="network-canvas"></svg>
+    </div>
+
+    <div class="export-section">
+      <button onclick="exportPNG()">💾 Export as PNG</button>
+      <button onclick="exportJSON()" class="secondary">📥 Export JSON Data</button>
+      <button onclick="resetZoom()" class="secondary">🔄 Reset View</button>
+    </div>
+  </div>
+
+  <script>
+    let graphData = { nodes: [], links: [] };
+    let simulation;
+    let svg, g;
+    let activeFilters = new Set();
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Initialize SVG
+    function initSVG() {
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = 600;
+
+      d3.select('#network-canvas').selectAll('*').remove();
+
+      svg = d3.select('#network-canvas')
+        .attr('width', width)
+        .attr('height', height);
+
+      g = svg.append('g');
+
+      // Zoom behavior
+      const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform);
+        });
+
+      svg.call(zoom);
+    }
+
+    // Load sample data
+    function loadSample(type) {
+      let csvData = '';
+
+      if (type === 'social') {
+        csvData = `node1,node2,relationship_type
+Alice,Bob,friend
+Alice,Carol,colleague
+Alice,David,family
+Bob,Carol,friend
+Bob,Eve,colleague
+Carol,David,friend
+David,Frank,family
+Eve,Grace,friend
+Frank,Grace,colleague
+Grace,Henry,friend
+Henry,Isabel,family
+Isabel,Jack,colleague
+Jack,Alice,friend
+Kate,Laura,friend
+Kate,Bob,colleague
+Laura,Michael,family
+Michael,Nancy,friend
+Nancy,Oscar,colleague
+Oscar,Paula,friend
+Paula,Alice,colleague`;
+      } else if (type === 'orgchart') {
+        csvData = `node1,node2,relationship_type
+CEO,CTO,reports_to
+CEO,CFO,reports_to
+CEO,CMO,reports_to
+CTO,DevLead,reports_to
+CTO,QALead,reports_to
+CFO,Accountant1,reports_to
+CFO,Accountant2,reports_to
+CMO,Marketing1,reports_to
+CMO,Marketing2,reports_to
+DevLead,Dev1,reports_to
+DevLead,Dev2,reports_to
+DevLead,Dev3,reports_to
+QALead,QA1,reports_to
+QALead,QA2,reports_to
+Marketing1,Designer,reports_to
+Marketing2,Content,reports_to`;
+      } else if (type === 'project') {
+        csvData = `node1,node2,relationship_type
+Requirements,Design,blocks
+Design,Database,blocks
+Design,Frontend,blocks
+Design,Backend,blocks
+Database,Backend,blocks
+Backend,API,blocks
+Frontend,API,depends_on
+API,Testing,blocks
+Testing,Deployment,blocks
+Security,Backend,review
+Security,Frontend,review
+Documentation,Testing,parallel
+Performance,API,review`;
+      }
+
+      parseCSV(csvData);
+    }
+
+    // Parse CSV
+    function parseCSV(csvText) {
+      const lines = csvText.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+
+      const nodes = new Map();
+      const links = [];
+      const relationshipTypes = new Set();
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const source = values[0];
+        const target = values[1];
+        const type = values[2] || 'default';
+
+        if (!nodes.has(source)) nodes.set(source, { id: source });
+        if (!nodes.has(target)) nodes.set(target, { id: target });
+
+        links.push({ source, target, type });
+        relationshipTypes.add(type);
+      }
+
+      graphData = {
+        nodes: Array.from(nodes.values()),
+        links: links
+      };
+
+      activeFilters = new Set(relationshipTypes);
+      renderGraph();
+      updateFilters(relationshipTypes);
+      updateLegend(relationshipTypes);
+      updateStats();
+    }
+
+    // Render graph
+    function renderGraph() {
+      initSVG();
+
+      const width = svg.attr('width');
+      const height = svg.attr('height');
+
+      // Filter links
+      const filteredLinks = graphData.links.filter(l => activeFilters.has(l.type));
+      
+      // Get nodes that are connected by filtered links
+      const activeNodes = new Set();
+      filteredLinks.forEach(l => {
+        activeNodes.add(l.source.id || l.source);
+        activeNodes.add(l.target.id || l.target);
+      });
+
+      const filteredNodes = graphData.nodes.filter(n => activeNodes.has(n.id));
+
+      // Create simulation
+      simulation = d3.forceSimulation(filteredNodes)
+        .force('link', d3.forceLink(filteredLinks)
+          .id(d => d.id)
+          .distance(100))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(30));
+
+      // Draw links
+      const link = g.append('g')
+        .selectAll('line')
+        .data(filteredLinks)
+        .join('line')
+        .attr('class', 'link')
+        .style('stroke', d => colorScale(d.type));
+
+      // Draw nodes
+      const node = g.append('g')
+        .selectAll('circle')
+        .data(filteredNodes)
+        .join('circle')
+        .attr('class', 'node')
+        .attr('r', 12)
+        .attr('fill', d => {
+          const connectedLinks = filteredLinks.filter(l => 
+            (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id
+          );
+          return connectedLinks.length > 0 ? colorScale(connectedLinks[0].type) : '#94a3b8';
+        })
+        .call(drag(simulation));
+
+      // Add labels
+      const label = g.append('g')
+        .selectAll('text')
+        .data(filteredNodes)
+        .join('text')
+        .attr('class', 'node-label')
+        .attr('dy', -18)
+        .text(d => d.id);
+
+      // Tooltips
+      node.append('title')
+        .text(d => {
+          const connections = filteredLinks.filter(l => 
+            (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id
+          );
+          return `${d.id}\nConnections: ${connections.length}`;
+        });
+
+      // Update positions
+      simulation.on('tick', () => {
+        link
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+
+        node
+          .attr('cx', d => d.x)
+          .attr('cy', d => d.y);
+
+        label
+          .attr('x', d => d.x)
+          .attr('y', d => d.y);
+      });
+    }
+
+    // Drag behavior
+    function drag(simulation) {
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+      }
+
+      function dragged(event) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+      }
+
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
+      }
+
+      return d3.drag()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended);
+    }
+
+    // Update filters
+    function updateFilters(types) {
+      const container = document.getElementById('filter-checkboxes');
+      container.innerHTML = '';
+
+      types.forEach(type => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-label';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.onchange = () => {
+          if (checkbox.checked) {
+            activeFilters.add(type);
+          } else {
+            activeFilters.delete(type);
+          }
+          renderGraph();
+        };
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(type));
+        container.appendChild(label);
+      });
+
+      document.getElementById('filter-section').style.display = 'block';
+    }
+
+    // Update legend
+    function updateLegend(types) {
+      const container = document.getElementById('legend-content');
+      container.innerHTML = '';
+
+      types.forEach(type => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+
+        const color = document.createElement('div');
+        color.className = 'legend-color';
+        color.style.backgroundColor = colorScale(type);
+
+        item.appendChild(color);
+        item.appendChild(document.createTextNode(type));
+        container.appendChild(item);
+      });
+
+      document.getElementById('legend').style.display = 'block';
+    }
+
+    // Update stats
+    function updateStats() {
+      const types = {};
+      graphData.links.forEach(l => {
+        types[l.type] = (types[l.type] || 0) + 1;
+      });
+
+      const html = `
+        <span class="stat-item"><strong>Nodes:</strong> ${graphData.nodes.length}</span>
+        <span class="stat-item"><strong>Connections:</strong> ${graphData.links.length}</span>
+        <span class="stat-item"><strong>Relationship Types:</strong> ${Object.keys(types).length}</span>
+      `;
+
+      document.getElementById('stats-content').innerHTML = html;
+      document.getElementById('stats').style.display = 'block';
+    }
+
+    // Export PNG
+    function exportPNG() {
+      const svgElement = document.getElementById('network-canvas');
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      canvas.width = svgElement.clientWidth;
+      canvas.height = svgElement.clientHeight;
+
+      img.onload = () => {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'connection-canvas.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      };
+
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    }
+
+    // Export JSON
+    function exportJSON() {
+      const dataStr = JSON.stringify(graphData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'connection-canvas-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Reset zoom
+    function resetZoom() {
+      svg.transition().duration(750).call(
+        d3.zoom().transform,
+        d3.zoomIdentity
+      );
+    }
+
+    // File upload handler
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        parseCSV(event.target.result);
+      };
+      reader.readAsText(file);
+    });
+
+    // Initialize
+    initSVG();
+  </script>
+</body>
+</html>
